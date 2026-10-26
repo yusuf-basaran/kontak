@@ -4,6 +4,26 @@ KONTAK, Kuzey Kıbrıs için araç ilan platformudur. Kullanılmış ve sıfır 
 
 [Siteyi aç](https://kon-tak.vercel.app) · [Yayın kaydı](docs/firebase-yayin.md)
 
+<!-- project-overview:start -->
+## Projeye genel bakış
+
+![KONTAK proje özellikleri: Ayrıntılı ilan arama, Bireysel ve kurumsal, Favoriler ve bildirim, Site içi mesajlaşma, Karşılaştırma ve değerleme, Yönetim ve iki dil](docs/images/project-overview.png)
+
+[Görseli büyük aç](docs/images/project-overview.png) · [SVG kaynağı](docs/images/project-overview.svg)
+
+<details>
+<summary>Görseldeki özellikler ve ilgili kaynaklar</summary>
+
+- **[Ayrıntılı ilan arama](docs/ozellikler.md)** — Araç filtreleri, harita ve donanım bilgileri.
+- **[Bireysel ve kurumsal](firma.html)** — Üyelik türleri, firma sayfaları ve ilan yönetimi.
+- **[Favoriler ve bildirim](hesabim.html)** — Kaydedilen ilanlar, aramalar ve bildirimler.
+- **[Site içi mesajlaşma](mesajlar.html)** — Alıcı ve satıcı arasında uygulama içi iletişim.
+- **[Karşılaştırma ve değerleme](degerleme.html)** — Araç karşılaştırma ve piyasa bazlı değerleme.
+- **[Yönetim ve iki dil](admin.html)** — İçerik, şikâyet ve paket yönetimi; TR / EN.
+
+</details>
+<!-- project-overview:end -->
+
 ## Özellikler
 
 - İlan arama, ayrıntılı filtreler, ilçe düzeyinde harita, kaporta ve donanım bilgileri
