@@ -274,7 +274,7 @@ export async function accountPage() {
               `</p><small>` +
               `${esc(new Date(n.olusturma).toLocaleString(locale()))}` +
               `</small>` +
-              `${n.veri.ilan_id ? `<a href="ilan.html?id=${esc(n.veri.ilan_id)}">${esc(t('view'))}</a>` : n.veri.konusma_id ? `<a href="mesajlar.html?k=${esc(n.veri.konusma_id)}">${esc(t('messages'))}</a>` : ''}` +
+              `${n.veri.ilan_id ? `<a href="ilan.html?id=${esc(n.veri.ilan_id)}">${esc(t('view'))}</a>` : n.veri.konusma_id ? `<a href="mesajlar.html?k=${esc(n.veri.konusma_id)}">${esc(t('messages'))}</a>` : n.veri.iletisim_id ? `<a href="admin.html?sekme=iletisim">${esc(t('contact'))}</a>` : ''}` +
               `</section>`,
           )
           .join('');
@@ -301,6 +301,7 @@ export function notificationText(n) {
     sikayet: 'reports',
     sikayet_sonucu: 'reports',
     randevu: 'appointment',
+    iletisim: 'contact',
   };
   return `${esc(t(keys[n.tur] || 'notifications'))} ${n.veri.durum ? esc(status(n.veri.durum)) : ''} ${esc(n.veri.not || n.veri.sonuc || n.veri.arama || n.veri.bitis || '')}`;
 }

@@ -96,7 +96,7 @@ export const api = onRequest(async (req, res) => {
       await rate(s, user?.uid || hash(req.ip || 'guest'), 'api', 240);
       s.flush();
     });
-    const result = await service.execute(req.body, user);
+    const result = await service.execute(req.body, user, hash(req.ip || 'guest'));
     res.json(result);
   } catch (error) {
     const status = error.status || (String(error.code || '').startsWith('auth/') ? 401 : 500);

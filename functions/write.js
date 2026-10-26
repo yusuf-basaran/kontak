@@ -180,7 +180,13 @@ async function validate(s, c, table, r, file) {
     check(/^[+0-9 ()-]+$/.test(r.telefon), 'Telefon geçersiz');
     text(r.notu || '', 0, 2000);
     check(r.firma_id || r.ilan_id, 'Randevu hedefi gerekli');
-    if (r.firma_id) check(await s.get('firmalar', r.firma_id), 'Firma bulunamadı');
+    if (r.firma_id) {
+      check(await s.get('firmalar', r.firma_id), 'Firma bulunamadı');
+      check(
+        typeof r.tarih === 'string' && Date.parse(r.tarih) > Date.now(),
+        'Gelecek bir randevu tarihi seçin',
+      );
+    }
     if (r.ilan_id) check(active(await s.get('ilanlar', r.ilan_id)), 'İlan bulunamadı');
   } else if (table === 'iletisim') {
     text(r.konu, 2, 160);

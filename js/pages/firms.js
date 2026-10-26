@@ -191,10 +191,10 @@ export async function firmPage() {
         ? box(
             'appointment',
             `<form id="appointment">` +
-              `${label('name', inp('ad', 'text', state.me?.ad || '', 'required'))}` +
-              `${label('phone', inp('telefon', 'tel', state.me?.telefon || '', 'required'))}` +
+              `${label('name', inp('ad', 'text', state.me?.ad || '', 'required minlength="2" maxlength="100"'))}` +
+              `${label('phone', inp('telefon', 'tel', state.me?.telefon || '', 'required minlength="7" maxlength="30"'))}` +
               `${label('date', inp('tarih', 'datetime-local', '', 'required'))}` +
-              `${label('note', '<textarea name="notu"></textarea>')}` +
+              `${label('note', '<textarea name="notu" maxlength="2000"></textarea>')}` +
               `${button('send')}` +
               `</form>`,
           )
@@ -210,6 +210,7 @@ export async function firmPage() {
         .insert({ firma_id: c.id, puan: Number(f.get('puan')), metin: f.get('metin') }),
     );
     await firmPage();
+    notify(t('success'));
   });
   if ($('#appointment'))
     guard($('#appointment'), async (f) => {
@@ -224,7 +225,8 @@ export async function firmPage() {
           notu: f.get('notu'),
         }),
       );
-      notify(t('success'));
+      $('#appointment').reset();
+      notify(t('appointmentSent'));
     });
   bindCards();
 }

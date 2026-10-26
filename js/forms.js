@@ -48,9 +48,18 @@ export function guard(form, fn) {
     '<input class="trap" name="website_check" tabindex="-1" autocomplete="off" aria-hidden="true">',
   );
   form.onsubmit = safeAction(async (e) => {
-    if (form.website_check.value || Date.now() - Number(form.dataset.start) < 700)
+    if (form.getAttribute('aria-busy') === 'true') return;
+    if (
+      form.elements.namedItem('website_check').value ||
+      Date.now() - Number(form.dataset.start) < 700
+    )
       throw Error(t('invalid'));
-    await fn(new FormData(form), e);
+    form.setAttribute('aria-busy', 'true');
+    try {
+      await fn(new FormData(form), e);
+    } finally {
+      form.setAttribute('aria-busy', 'false');
+    }
   });
 }
 

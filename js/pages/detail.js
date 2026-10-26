@@ -285,7 +285,8 @@ export async function detailPage(id) {
         sehir: f.get('sehir'),
       }),
     );
-    notify(t('success'));
+    $('#inspection').reset();
+    notify(t('appointmentSent'));
   });
   $$('[data-report]').forEach(
     (b) =>

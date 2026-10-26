@@ -183,7 +183,8 @@ export async function rate(s, uid, area, limit, fingerprint) {
   const minute = (r.minute || []).filter((x) => x > t - 60000);
   const daily = r.day === new Date(t).toISOString().slice(0, 10) ? r.daily || 0 : 0;
   check(
-    minute.length < limit && daily < (area === 'mesaj' ? 500 : area === 'api' ? 20000 : 1000),
+    minute.length < limit &&
+      daily < (area === 'iletisim' ? 20 : area === 'mesaj' ? 500 : area === 'api' ? 20000 : 1000),
     'İşlem sınırı; daha sonra tekrar deneyin',
     429,
   );

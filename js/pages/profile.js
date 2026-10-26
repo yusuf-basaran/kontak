@@ -27,31 +27,30 @@ export async function profilePage(target) {
       'changePassword',
       `<form id="change-password">${label('password', inp('password', 'password', '', 'minlength="10" required'))}${button('save')}</form>`,
     ) +
-    box(
-      'phoneVerify',
-      `<form id="sms-phone">` +
-        `${label('phone', inp('phone', 'tel', state.me.telefon || '', 'required'))}` +
-        `${button('send')}` +
-        `</form><form id="sms-code">` +
-        `${label('code', inp('code', 'text', '', 'pattern="[0-9]{6}" required'))}` +
-        `${button('checkCode')}` +
-        `</form>`,
-    ) +
+    (state.settings.sms_zorunlu
+      ? box(
+          'phoneVerify',
+          `<form id="sms-phone">` +
+            `${label('phone', inp('phone', 'tel', state.me.telefon || '', 'required'))}` +
+            `${button('send')}` +
+            `</form><form id="sms-code">` +
+            `${label('code', inp('code', 'text', '', 'pattern="[0-9]{6}" required'))}` +
+            `${button('checkCode')}` +
+            `</form>`,
+        )
+      : '') +
     (company ? companyEdit(company) : '') +
     `<button class="danger" id="delete-account">${esc(t('deleteAccount'))}</button>`;
   guard($('#profile'), async (f) => {
-    await query(
-      state.db
-        .from('profil')
-        .update({
-          ad: f.get('ad'),
-          telefon: f.get('telefon'),
-          sehir: f.get('sehir') || null,
-          eposta_ozet: f.has('eposta_ozet'),
-          telefon_goster: f.has('telefon_goster'),
-        })
-        .eq('id', state.user.id),
-    );
+    const data = {
+      ad: f.get('ad'),
+      telefon: f.get('telefon'),
+      sehir: f.get('sehir') || null,
+      eposta_ozet: f.has('eposta_ozet'),
+      telefon_goster: f.has('telefon_goster'),
+    };
+    await query(state.db.from('profil').update(data).eq('id', state.user.id));
+    Object.assign(state.me, data);
     notify(t('success'));
   });
   guard($('#change-password'), async (f) => {
@@ -59,20 +58,22 @@ export async function profilePage(target) {
     if (r.error) throw r.error;
     notify(t('success'));
   });
-  guard($('#sms-phone'), async (f) => {
-    const r = await state.db.auth.updateUser({ phone: f.get('phone') });
-    if (r.error) throw r.error;
-    notify(t('success'));
-  });
-  guard($('#sms-code'), async (f) => {
-    const r = await state.db.auth.verifyOtp({
-      phone: $('#sms-phone').phone.value,
-      token: f.get('code'),
-      type: 'phone_change',
+  if ($('#sms-phone'))
+    guard($('#sms-phone'), async (f) => {
+      const r = await state.db.auth.updateUser({ phone: f.get('phone') });
+      if (r.error) throw r.error;
+      notify(t('success'));
     });
-    if (r.error) throw r.error;
-    notify(t('success'));
-  });
+  if ($('#sms-code'))
+    guard($('#sms-code'), async (f) => {
+      const r = await state.db.auth.verifyOtp({
+        phone: $('#sms-phone').phone.value,
+        token: f.get('code'),
+        type: 'phone_change',
+      });
+      if (r.error) throw r.error;
+      notify(t('success'));
+    });
   $('#delete-account').onclick = safeAction(async () => {
     if (confirm(t('confirmDelete'))) {
       await rpc('hesap_sil');

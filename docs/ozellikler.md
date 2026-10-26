@@ -128,7 +128,7 @@ Panel doğrulanmış yönetici rolüyle açılır. Genel sayaçlar; ilan onayı/
 
 ## 32. Yazılar, yasal sayfalar ve iletişim
 
-Garaj Yazıları liste/ayrıntı, kategori, tarih, kapak, özet ve ilgili yazıları sunar. Hakkımızda, sözleşmeler, ilan/paket koşulları, gizlilik/çerez/KVKK, güvenli alım/satış ve SSS içerikleri veritabanından gelir. Reklam Ver ve İletişim üye mesajlarını yöneticiye iletir. İşletmeci yer tutucuları ve hukuki metinler yayından önce onaylanmalıdır.
+Garaj Yazıları liste/ayrıntı, kategori, tarih, kapak, özet ve ilgili yazıları sunar. Hakkımızda, sözleşmeler, ilan/paket koşulları, gizlilik/çerez/KVKK, güvenli alım/satış ve SSS içerikleri veritabanından gelir. Reklam Ver ve İletişim formları, üyelik gerektirmeden ad, e-posta, konu ve mesajı alır. Kayıt Yönetim > İletişim bölümünde görünür; yöneticiye site içi bildirim gider. Başarı onayı yalnız sunucu kaydı tamamlayınca gösterilir. Tekrar gönderim, hız/günlük sınırı ve bot alanı sunucuda denetlenir. Bu işlem harici e-posta gönderimi değildir. İşletmeci yer tutucuları ve hukuki metinler yayından önce onaylanmalıdır.
 
 ## 33. Mobil görünüm, yükleme ve çevrimdışı ekran
 

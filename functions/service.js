@@ -14,6 +14,8 @@ import {
   published,
   mapRows,
   setting,
+  rate,
+  notify,
 } from './core.js';
 import { saveEditor } from './editor.js';
 import { deleteListing } from './deletion.js';
@@ -96,6 +98,28 @@ export function createService({ db, auth, bucket }) {
     return target;
   }
   async function dispatch(s, c, name, p) {
+    if (name === 'iletisim_gonder') {
+      fields(p, ['ad', 'eposta', 'konu', 'metin', 'website_check']);
+      check(p.website_check === '', 'Geçersiz işlem');
+      const row = {
+        id: id(),
+        kullanici_id: c.uid,
+        ad: text(p.ad, 2, 100),
+        eposta: text(p.eposta, 5, 254).toLowerCase(),
+        konu: text(p.konu, 2, 140),
+        metin: text(p.metin, 5, 4000),
+        olusturma: now(),
+      };
+      check(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.eposta), 'E-posta adresi geçersiz');
+      check(c.clientId || c.uid, 'İstek kaynağı gerekli', 403);
+      const fingerprint = JSON.stringify([row.eposta, row.konu, row.metin]);
+      await rate(s, c.clientId || c.uid, 'iletisim', 5, fingerprint);
+      if (c.uid && c.clientId) await rate(s, c.uid, 'iletisim', 5, fingerprint);
+      s.put('iletisim', row.id, row);
+      for (const role of (await s.all('_yetkiler')).filter((r) => r.admin && !r.engelli))
+        await notify(s, role.kullanici_id, 'iletisim', { iletisim_id: row.id }, row.id, false);
+      return { id: row.id };
+    }
     if (name === 'ilan_kaydet') return saveEditor(s, c, p, file);
     if (name === 'profil_kaydet') {
       check(c.uid, 'Giriş yapın', 401);
@@ -205,8 +229,12 @@ export function createService({ db, auth, bucket }) {
     if (name === 'genel_ayarlar') {
       const out = {};
       await Promise.all(
-        ['kurlar', 'sosyal', 'iletisim_telefon'].map(async (k) => {
-          out[k] = await setting(s, k, k === 'iletisim_telefon' ? '' : {});
+        ['kurlar', 'sosyal', 'iletisim_telefon', 'sms_zorunlu'].map(async (k) => {
+          out[k] = await setting(
+            s,
+            k,
+            k === 'sms_zorunlu' ? false : k === 'iletisim_telefon' ? '' : {},
+          );
         }),
       );
       return out;
@@ -419,10 +447,11 @@ export function createService({ db, auth, bucket }) {
   }
   return {
     context,
-    async execute(body, user) {
+    async execute(body, user, clientId) {
       object(body);
       const c = await context(user),
         p = body.data || {};
+      c.clientId = clientId;
       object(p);
       if (!body.query && body.name === 'ilan_sil')
         return { data: await deleteListing(db, bucket, c, p), error: null };

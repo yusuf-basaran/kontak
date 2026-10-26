@@ -87,7 +87,12 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
     await put('ayarlar', 'iban', { anahtar: 'iban', deger: 'PRIVATE-BANK-ACCOUNT' });
     const data = await rpc(null, 'baslangic', { p_sozluk: true, p_donanim: true });
     assert.ok(data.cats.length && data.eqs.length && data.lex.markalar.length);
-    assert.deepEqual(Object.keys(data.settings).sort(), ['iletisim_telefon', 'kurlar', 'sosyal']);
+    assert.deepEqual(Object.keys(data.settings).sort(), [
+      'iletisim_telefon',
+      'kurlar',
+      'sms_zorunlu',
+      'sosyal',
+    ]);
     assert.doesNotMatch(JSON.stringify(data), /PRIVATE-BANK-ACCOUNT/);
     const brief = await rpc(null, 'baslangic', { p_sozluk: false, p_donanim: false });
     assert.equal(brief.lex, null);
@@ -457,6 +462,35 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
         }),
       /Telefon/,
     );
+    await put('firmalar', 'randevu-merkezi', {
+      id: 'randevu-merkezi',
+      kullanici_id: 'uye-c',
+      ad: 'Kıyı Kontrol',
+      tur: 'ekspertiz_merkezi',
+      sehir: 'Girne',
+    });
+    const appointment = {
+      firma_id: 'randevu-merkezi',
+      ad: 'Kıyı Üye',
+      telefon: '+905331234567',
+      tarih: future(2),
+      notu: 'Araç kontrolü.',
+    };
+    const booked = await query('uye-a', 'randevular', 'insert', appointment);
+    assert.ok((await query('uye-c', 'randevular')).some((r) => r.id === booked[0].id));
+    assert.ok(
+      (await rpc('yonetici', 'admin_veri', { p_tablo: 'randevular' })).some(
+        (r) => r.id === booked[0].id,
+      ),
+    );
+    await reject(
+      () => query('uye-a', 'randevular', 'insert', { ...appointment, tarih: future(-1) }),
+      /Gelecek/,
+    );
+    await reject(
+      () => query('uye-a', 'randevular', 'insert', { ...appointment, tarih: 'geçersiz' }),
+      /Gelecek/,
+    );
     for (const uid of ['uye-b', 'uye-c', 'yonetici'])
       await query(uid, 'sikayetler', 'insert', {
         ilan_id: listing,
@@ -466,6 +500,57 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
     assert.equal((await doc('ilanlar', listing)).gizli, true);
     assert.equal((await rpc(null, 'ilan_ara', { p: { id: listing } })).toplam, 0);
   });
+  await t.test(
+    'Ziyaretçi iletişimi kaydedilir, yönetici görür; tekrar ve yetkisiz erişim engellenir',
+    async () => {
+      const data = {
+        ad: 'Ziyaretçi Üye',
+        eposta: 'ziyaretci@example.invalid',
+        konu: 'İletişim kontrolü',
+        metin: 'İlan düzenleme hakkında bilgi almak istiyorum.',
+        website_check: '',
+      };
+      const send = (value) =>
+        rest('http://127.0.0.1:5000/api', null, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'iletisim_gonder', data: value }),
+        });
+      const response = await send(data);
+      assert.equal(response.status, 200, await response.clone().text());
+      const key = (await response.json()).data.id,
+        row = await doc('iletisim', key);
+      assert.equal(row.kullanici_id, null);
+      assert.equal(row.eposta, data.eposta);
+      assert.equal(row.metin, data.metin);
+      assert.ok(
+        (await rpc('yonetici', 'admin_veri', { p_tablo: 'iletisim' })).some((r) => r.id === key),
+      );
+      const notices = (await query('yonetici', 'bildirimler')).filter(
+        (n) => n.veri.iletisim_id === key,
+      );
+      assert.equal(notices.length, 1);
+      assert.equal(await doc('_eposta', notices[0].id), undefined);
+      assert.deepEqual(await query(null, 'iletisim'), []);
+      assert.deepEqual(await query('uye-a', 'iletisim'), []);
+      assert.equal((await rest(firestore('iletisim', key), 'uye-a')).status, 403);
+      assert.equal((await send({ ...data, metin: '  ' + data.metin + '  ' })).status, 429);
+      for (const patch of [
+        { eposta: 'yanlis' },
+        { website_check: 'spam' },
+        { metin: 'x'.repeat(4001) },
+        { kullanici_id: 'yonetici' },
+      ])
+        assert.equal((await send({ ...data, ...patch })).status, patch.kullanici_id ? 403 : 400);
+      await reject(() => service.execute({ name: 'iletisim_gonder', data }), /kaynağı/);
+      const dailyKey = hash('daily-contact:iletisim');
+      await put('_hiz', dailyKey, { day: new Date().toISOString().slice(0, 10), daily: 20 });
+      await reject(
+        () => service.execute({ name: 'iletisim_gonder', data }, null, 'daily-contact'),
+        /sınırı/,
+      );
+    },
+  );
   await t.test('Tarayıcı gerçek Firebase SDK ile giriş yapıp sunucuya erişir', async () => {
     const server = spawn(process.execPath, ['scripts/serve.mjs'], {
       env: { ...process.env, PORT: '4180', FIREBASE_EMULATORS: 'true' },
@@ -665,6 +750,26 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
       await refreshedState.dispose();
       assert.ok(await page.locator('a[href^="giris.html"]').count());
       await auth.updateUser('uye-a', { disabled: false });
+      await page.goto('http://127.0.0.1:4180/sayfa.html?s=iletisim');
+      await page.locator('#contact-form [name=ad]').fill('Ziyaretçi Kontrol');
+      await page.locator('#contact-form [name=eposta]').fill('tarayici@example.invalid');
+      await page
+        .locator('#contact-form [name=metin]')
+        .fill('Tarayıcı formundan gelen iletişim mesajı.');
+      await page.waitForFunction(
+        () => Date.now() - Number(document.querySelector('#contact-form').dataset.start) >= 700,
+      );
+      await page.locator('#contact-form button').click();
+      await page.waitForFunction(() =>
+        document.querySelector('#contact-status')?.textContent.includes('yönetim ekibine iletildi'),
+      );
+      const saved = (
+        await db.collection('iletisim').where('eposta', '==', 'tarayici@example.invalid').get()
+      ).docs.map((d) => d.data());
+      assert.equal(saved.length, 1);
+      assert.equal(saved[0].kullanici_id, null);
+      assert.equal(await page.locator('#contact-form [name=metin]').inputValue(), '');
+      assert.ok(page.url().includes('sayfa.html?s=iletisim'));
     } finally {
       await browser?.close();
       server.kill();

@@ -21,7 +21,7 @@ export async function wantedPage() {
         `${label('currency', select('para_birimi', ['GBP', 'EUR', 'USD', 'TL'], 'GBP', false))}` +
         `${label('city', select('sehir', cityList))}` +
         `</div>` +
-        `${label('description', '<textarea name="metin" required maxlength="3000"></textarea>')}` +
+        `${label('description', '<textarea name="metin" required minlength="3" maxlength="3000"></textarea>')}` +
         `${button('send')}` +
         `</form>`,
     ) +

@@ -341,6 +341,11 @@ export const D = {
   about: ['Hakkımızda', 'About Us'],
   advertise: ['Reklam Ver', 'Advertise'],
   contact: ['İletişim', 'Contact'],
+  contactSent: [
+    'Mesajınız yönetim ekibine iletildi.',
+    'Your message has been sent to the management team.',
+  ],
+  appointmentSent: ['Randevu talebiniz alındı.', 'Your appointment request has been received.'],
   personalTerms: ['Bireysel Üye Sözleşmesi', 'Individual Membership Agreement'],
   businessTerms: ['Kurumsal Üye Sözleşmesi', 'Business Membership Agreement'],
   rules: ['İlan Kuralları', 'Listing Rules'],
