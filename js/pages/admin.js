@@ -308,7 +308,7 @@ export async function adminPage() {
       );
       return;
     }
-    const cols = Object.keys(list[0] || {}).filter(
+    const cols = [...new Set(list.flatMap((r) => Object.keys(r)))].filter(
       (k) => !['icerik', 'icerik_en', 'onceki', 'sonraki', 'detay', 'fotograflar'].includes(k),
     );
     target.innerHTML =

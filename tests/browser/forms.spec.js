@@ -116,6 +116,26 @@ test('Etkin SMS doğrulaması profil ekranında kalır', async ({ page }) => {
   await expect(page.locator('#sms-code')).toBeVisible();
 });
 
+test('Yönetici eski ve yeni iletişim kayıtlarında gönderen bilgilerini görür', async ({ page }) => {
+  await setup(page, (f) => {
+    f.tables.iletisim = [
+      { id: 'eski-kayit', konu: 'Eski başvuru', metin: 'Önceki iletişim kaydı.' },
+      {
+        id: 'yeni-kayit',
+        ad: 'Kıyı Ziyaretçi',
+        eposta: 'ziyaretci@example.invalid',
+        konu: 'Yeni başvuru',
+        metin: 'İletişim formundan gelen mesaj.',
+      },
+    ];
+  });
+  await page.goto('/admin.html?sekme=iletisim');
+  await expect(page.locator('#admin-content')).toContainText('Kıyı Ziyaretçi');
+  await expect(page.locator('#admin-content')).toContainText('ziyaretci@example.invalid');
+  await page.locator('#admin-search').fill('ziyaretci@example.invalid');
+  await expect(page.locator('#admin-content tbody tr')).toHaveCount(1);
+});
+
 test('Ekspertiz talebi gönderilir ve başarı onayı gösterilir', async ({ page }) => {
   await setup(page);
   await page.goto('/ilan.html?id=' + id);
