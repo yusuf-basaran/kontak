@@ -600,6 +600,10 @@
     {
       "anahtar": "iletisim_telefon",
       "deger": ""
+    },
+    {
+      "anahtar": "giris_saglayicilari",
+      "deger": []
     }
   ],
   "sayfalar": [
@@ -693,6 +697,13 @@
       "baslik_en": "FAQ",
       "icerik": "İlan nasıl verilir? Aracını Sat bağlantısından bilgileri doldur, fotoğrafları ekle, önizlemeyi kontrol et ve yayınla. E-posta doğrulaması gerekir; SMS denetimi etkinleştirildiğinde telefon doğrulaması da istenir.\n\nÜcretsiz kaç ilan verilebilir? Bireysel hesapların aktif limiti yönetim ayarından okunur. Kurumsal hesaplar paket kotası kullanır. Paketlerin güncel hakları Paketler ekranında gösterilir.\n\nPaket ödemesi nasıl yapılır? Önce talep gönderilir. İnceleme sonrasında banka bilgisi yalnız Hesabım > Paketlerim ekranında açılır. Dekont kontrolünden sonra haklar tanımlanır.\n\nBir ilan şüpheliyse ne yapmalıyım? İlanın Şikayet et bağlantısından nedenini seçin. Para göndermeyin; görüşme kayıtlarını silmeyin.\n\nDeğerleme kesin satış fiyatı mıdır? Hayır. Yeterli sayıdaki benzer ilan fiyatından hesaplanan aralıktır; ilan fiyatı gerçekleşmiş satış fiyatı anlamına gelmez.",
       "icerik_en": "How do I publish? Use Sell Your Vehicle, fill in the details, add photos, check the preview and publish. Email verification is required; phone verification is also required when SMS checks are enabled.\n\nHow many listings are free? The individual active limit comes from administrator settings. Business accounts use package credits. Current credits are shown on Packages.\n\nHow are packages paid? Submit a request first. After review, bank details open only in My Account > My Packages. Credits activate after the receipt is checked.\n\nWhat if a listing is suspicious? Select a reason under Report. Do not send money or delete conversation records.\n\nIs valuation a guaranteed sale price? No. It is a range based on enough comparable asking prices; asking prices are not completed sale prices."
+    },
+    {
+      "slug": "veri-silme-talebi",
+      "baslik": "Hesap ve Veri Silme Talebi",
+      "baslik_en": "Account and Data Deletion Requests",
+      "icerik": "Hesap erişimini kapatmak için Hesabım > Profil > Hesabı sil yolunu izleyin. Bu işlem hesabı devre dışı bırakır ve ilanları arşivler.\n\nFacebook bağlantınızın ve kişisel verilerinizin silinmesini istemek için İletişim formunu açın. Konuya Veri silme talebi yazın ve hesabınızla ilişkili e-posta adresini belirtin. Parolanızı veya Facebook erişim anahtarınızı göndermeyin. Talep, hesap sahipliği doğrulandıktan sonra yönetim tarafından değerlendirilir.\n\nFacebook ayarlarındaki Uygulamalar ve İnternet Siteleri bölümünden KONTAK bağlantısını da kaldırabilirsiniz. Bu işlem KONTAK kayıtlarını kendiliğinden silmez.",
+      "icerik_en": "To close account access, open My Account > Profile > Delete account. This disables the account and archives its listings.\n\nTo request deletion of your Facebook connection and personal data, open the Contact form. Use Data deletion request as the subject and provide the email address associated with your account. Do not send your password or Facebook access token. Management reviews the request after verifying account ownership.\n\nYou can also remove KONTAK in the Apps and websites section of your Facebook settings. This does not automatically delete KONTAK records."
     }
   ],
   "yazilar": [

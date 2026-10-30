@@ -2,7 +2,7 @@ import { esc } from '../utils.js';
 import { params } from '../context.js';
 import { $, $$, meta, notify, pageHead } from '../ui.js';
 import { t } from '../i18n.js';
-import { button, guard, inp, label, select } from '../forms.js';
+import { button, guard, inp, label, safeAction, select } from '../forms.js';
 import { state } from '../state.js';
 import { write } from '../utils.js';
 
@@ -65,7 +65,53 @@ export async function loginPage() {
             : ''
         }` +
         `${button(mode === 'password' ? 'changePassword' : mode)}` +
-        `</form></div>`);
+        `</form>` +
+        `${
+          ['signin', 'register'].includes(mode)
+            ? `<div class="social-auth">${(state.settings.giris_saglayicilari || [])
+                .filter((p) => ['google', 'facebook'].includes(p))
+                .map(
+                  (p) =>
+                    `<button type="button" class="btn secondary" data-social="${p}">${p === 'google' ? '<img src="/assets/google-signin.png" width="20" height="20" alt="">' : ''}${esc(t(p === 'google' ? 'googleLogin' : 'facebookLogin'))}</button>`,
+                )
+                .join(
+                  '',
+                )}</div>${state.settings.giris_saglayicilari?.length ? `<p class="muted">${esc(t('socialTerms'))} <a href="sayfa.html?s=bireysel-uye-sozlesmesi">${esc(t('personalTerms'))}</a> · <a href="sayfa.html?s=gizlilik-politikasi">${esc(t('privacy'))}</a></p>` : ''}`
+            : ''
+        }` +
+        `</div>`);
+    $$('[data-social]').forEach(
+      (b) =>
+        (b.onclick = safeAction(async () => {
+          if (!state.db) throw Error(t('connect'));
+          const buttons = $$('[data-social]');
+          buttons.forEach((n) => (n.disabled = true));
+          try {
+            const r = await state.db.auth.signInWithOAuth({
+              provider: b.dataset.social,
+              emailRedirectTo: new URL('hesabim.html', location.href).href,
+            });
+            if (r.error) {
+              const key = {
+                'auth/account-exists-with-different-credential': 'socialConflict',
+                'auth/popup-blocked': 'socialPopupBlocked',
+                'auth/operation-not-allowed': 'socialUnavailable',
+                'auth/unauthorized-domain': 'socialUnavailable',
+                'auth/missing-email': 'socialEmail',
+              }[r.error.code];
+              if (
+                ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'].includes(r.error.code)
+              )
+                return;
+              throw key ? Error(t(key)) : r.error;
+            }
+            if (r.data?.verification === 'link') notify(t('confirmEmail'));
+            else location.href = nextUrl();
+          } finally {
+            buttons.forEach((n) => (n.disabled = false));
+          }
+        })),
+    );
     $$('[data-auth]').forEach(
       (b) =>
         (b.onclick = () => {

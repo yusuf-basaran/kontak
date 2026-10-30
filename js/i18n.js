@@ -243,6 +243,28 @@ export const D = {
   notifications: ['Bildirimler', 'Notifications'],
   messages: ['Mesajlar', 'Messages'],
   login: ['Giriş yap / Üye ol', 'Sign in / Register'],
+  googleLogin: ['Google ile giriş yap', 'Sign in with Google'],
+  facebookLogin: ['Facebook ile giriş yap', 'Sign in with Facebook'],
+  socialTerms: [
+    'Devam ederek üyelik koşullarını kabul edersiniz.',
+    'By continuing, you accept the membership terms.',
+  ],
+  socialConflict: [
+    'Bu e-posta zaten kayıtlı. Hesabınızı bağlamak için bu ekranda mevcut giriş yönteminizle giriş yapın.',
+    'This email is already registered. Use your existing sign-in method on this screen to link your account.',
+  ],
+  socialPopupBlocked: [
+    'Giriş penceresi engellendi. Tarayıcınızda açılır pencereye izin verip tekrar deneyin.',
+    'The sign-in window was blocked. Allow pop-ups in your browser and try again.',
+  ],
+  socialUnavailable: [
+    'Bu giriş yöntemi şu anda kullanılamıyor. E-posta ile giriş yapabilirsiniz.',
+    'This sign-in method is currently unavailable. You can sign in with email.',
+  ],
+  socialEmail: [
+    'Bu hesap e-posta adresi paylaşmadı. E-posta ile kayıt olun veya sağlayıcıdaki e-posta iznini kontrol edin.',
+    'This account did not share an email address. Register by email or check the provider email permission.',
+  ],
   sell: ['Aracını Sat', 'Sell Your Vehicle'],
   home: ['Ana Sayfa', 'Home'],
   favs: ['Favoriler', 'Favourites'],

@@ -93,18 +93,71 @@ export async function createClient(cfg) {
       return { data: null, error };
     }
   };
-  let verification;
+  let verification, pendingCredential;
+  async function linkPending() {
+    const current = auth.currentUser;
+    if (!current?.emailVerified || pendingCredential?.email !== current.email?.toLowerCase())
+      return;
+    if (!current.providerData.some((p) => p.providerId === pendingCredential.credential.providerId))
+      await authSdk.linkWithCredential(current, pendingCredential.credential);
+    pendingCredential = null;
+  }
   const client = {
     projectId: config.projectId,
     auth: {
       getUser: async () => ({ data: { user: auth.currentUser?.emailVerified ? user() : null } }),
-      signOut: () => result(() => authSdk.signOut(auth)),
+      signOut: () =>
+        result(() => {
+          pendingCredential = null;
+          return authSdk.signOut(auth);
+        }),
       signInWithPassword: ({ email, password }) =>
         result(async () => {
           await authSdk.signInWithEmailAndPassword(auth, email, password);
           if (!auth.currentUser.emailVerified) {
             await authSdk.signOut(auth);
             throw Error('E-posta adresinizi doğrulayın');
+          }
+          await linkPending();
+          return { user: user() };
+        }),
+      signInWithOAuth: ({ provider, emailRedirectTo }) =>
+        result(async () => {
+          if (!['google', 'facebook'].includes(provider)) throw Error('Geçersiz giriş sağlayıcısı');
+          const Type =
+            provider === 'google' ? authSdk.GoogleAuthProvider : authSdk.FacebookAuthProvider;
+          const source = new Type();
+          if (provider === 'google') source.setCustomParameters({ prompt: 'select_account' });
+          else source.addScope('email');
+          emailLanguage();
+          try {
+            await authSdk.signInWithPopup(auth, source);
+          } catch (error) {
+            if (error.code === 'auth/account-exists-with-different-credential') {
+              const credential = Type.credentialFromError(error);
+              if (credential && error.customData?.email)
+                pendingCredential = { credential, email: error.customData.email.toLowerCase() };
+            }
+            throw error;
+          }
+          const current = auth.currentUser;
+          if (!current.email) {
+            pendingCredential = null;
+            await authSdk.signOut(auth);
+            throw Object.assign(Error('E-posta adresi gerekli'), { code: 'auth/missing-email' });
+          }
+          await linkPending();
+          const r = await call({
+            name: 'profil_kaydet',
+            data: {
+              ad: (current.displayName || current.email.split('@')[0]).slice(0, 100),
+              tip: 'bireysel',
+            },
+          });
+          if (r.error) throw r.error;
+          if (!current.emailVerified) {
+            await authSdk.sendEmailVerification(current, { url: emailRedirectTo });
+            return { verification: 'link' };
           }
           return { user: user() };
         }),

@@ -113,6 +113,13 @@ async function start() {
     const profile = async () => {
       if (!state.user) return;
       state.me = await rpc('profilim');
+      if (!state.me) {
+        await rpc('profil_kaydet', {
+          ad: state.user.email?.split('@')[0]?.slice(0, 100) || t('name'),
+          tip: 'bireysel',
+        });
+        state.me = await rpc('profilim');
+      }
       const pending = read('bc-company', null);
       if (pending && pending.email?.toLowerCase() === state.user.email?.toLowerCase()) {
         let firm = await query(table('firmalar').eq('kullanici_id', state.user.id).maybeSingle());

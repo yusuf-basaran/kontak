@@ -23,6 +23,7 @@ export const settings = [
   'talep_zaman_asimi_gun',
   'ilan_onayi',
   'sms_zorunlu',
+  'giris_saglayicilari',
   'kurlar',
   'sosyal',
   'iletisim_telefon',
@@ -183,6 +184,14 @@ export async function adminWrite(s, c, p) {
     }
     if (['sms_zorunlu', 'ilan_onayi'].includes(p.p_id))
       check(typeof value === 'boolean', 'Ayar geçersiz');
+    if (p.p_id === 'giris_saglayicilari')
+      check(
+        Array.isArray(value) &&
+          value.length <= 2 &&
+          value.every((v) => ['google', 'facebook'].includes(v)) &&
+          new Set(value).size === value.length,
+        'Giriş sağlayıcısı geçersiz',
+      );
     const old = await s.get(name, p.p_id),
       next = { anahtar: p.p_id, deger: value };
     s.put(name, p.p_id, next);

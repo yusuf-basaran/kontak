@@ -20,6 +20,20 @@ export async function createClient() {
         record('register', p);
         return { data: { user: ME, verification: 'link' } };
       },
+      signInWithOAuth: async (p) => {
+        record('oauth', p);
+        if (globalThis.fixture.oauthDelay)
+          await new Promise((r) => setTimeout(r, globalThis.fixture.oauthDelay));
+        return globalThis.fixture.oauthError
+          ? {
+              error: Object.assign(Error('Giriş tamamlanamadı'), {
+                code: globalThis.fixture.oauthError,
+              }),
+            }
+          : {
+              data: globalThis.fixture.oauthVerification ? { verification: 'link' } : { user: ME },
+            };
+      },
       resetPasswordForEmail: async (email, options) => {
         record('resetPassword', { email, options });
         return {};

@@ -88,6 +88,7 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
     const data = await rpc(null, 'baslangic', { p_sozluk: true, p_donanim: true });
     assert.ok(data.cats.length && data.eqs.length && data.lex.markalar.length);
     assert.deepEqual(Object.keys(data.settings).sort(), [
+      'giris_saglayicilari',
       'iletisim_telefon',
       'kurlar',
       'sms_zorunlu',
@@ -552,6 +553,19 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
     },
   );
   await t.test('Tarayıcı gerçek Firebase SDK ile giriş yapıp sunucuya erişir', async () => {
+    const providerSettings = await rest(
+      `http://127.0.0.1:5001/${project}/europe-west1/api`,
+      'yonetici',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'admin_duzenle',
+          data: { p_tablo: 'ayarlar', p_id: 'giris_saglayicilari', p_veri: ['google', 'facebook'] },
+        }),
+      },
+    );
+    assert.equal(providerSettings.status, 200, await providerSettings.clone().text());
     const server = spawn(process.execPath, ['scripts/serve.mjs'], {
       env: { ...process.env, PORT: '4180', FIREBASE_EMULATORS: 'true' },
       stdio: 'ignore',
@@ -571,6 +585,7 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
           : {}),
       });
       const page = await browser.newPage({ ignoreHTTPSErrors: !!process.env.CHROMIUM_PROXY });
+      await page.context().route('https://unpkg.com/**', (route) => route.abort());
       const errors = [];
       page.on('pageerror', (e) => errors.push(e.message));
       page.on('console', (m) => {
@@ -770,11 +785,129 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
       assert.equal(saved[0].kullanici_id, null);
       assert.equal(await page.locator('#contact-form [name=metin]').inputValue(), '');
       assert.ok(page.url().includes('sayfa.html?s=iletisim'));
+      for (const provider of ['google', 'facebook']) {
+        await page.goto('http://127.0.0.1:4180/giris.html');
+        await page.locator(`[data-social=${provider}]`).waitFor({ state: 'visible' });
+        const popupReady = page.waitForEvent('popup', { timeout: 30000 });
+        await page.locator(`[data-social=${provider}]`).click();
+        const popup = await popupReady.catch(async (error) => {
+            throw Error(
+              error.message + ' Giriş uyarısı: ' + (await page.locator('#notice').textContent()),
+            );
+          }),
+          email = `sosyal-${provider}@example.invalid`;
+        await popup.waitForLoadState('domcontentloaded');
+        await popup.locator('#add-account-button').click();
+        await popup.locator('#email-input').fill(email);
+        await popup.locator('#display-name-input').fill('Sosyal Üye');
+        await popup.locator('#sign-in').click();
+        await page.waitForFunction(
+          () =>
+            location.pathname === '/hesabim.html' ||
+            document.querySelector('#notice')?.textContent.includes('E-posta doğrulama'),
+        );
+        const socialUser = await auth.getUserByEmail(email);
+        if (!socialUser.emailVerified) {
+          const codes = await (
+            await fetch(
+              `http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/emulator/v1/projects/${project}/oobCodes`,
+            )
+          ).json();
+          const code = codes.oobCodes.find(
+            (r) => r.email === email && r.requestType === 'VERIFY_EMAIL',
+          );
+          assert.ok(code?.oobCode);
+          const confirmed = await fetch(
+            `http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:update?key=demo-key`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ oobCode: code.oobCode }),
+            },
+          );
+          assert.equal(confirmed.status, 200);
+          await page.goto('http://127.0.0.1:4180/hesabim.html');
+        }
+        await page.waitForFunction(() => document.querySelector('[data-account=profil]'));
+        assert.ok(socialUser.providerData.some((p) => p.providerId === provider + '.com'));
+        const profile = await doc('profil', socialUser.uid);
+        assert.equal(profile.ad, 'Sosyal Üye');
+        assert.equal(profile.tip, 'bireysel');
+        assert.equal((await doc('_yetkiler', socialUser.uid)).admin, false);
+        await put('profil', socialUser.uid, { ...profile, tip: 'kurumsal' });
+        await service.execute(
+          { name: 'profil_kaydet', data: { ad: 'Yeni Ad', tip: 'bireysel' } },
+          await auth.getUser(socialUser.uid),
+        );
+        assert.equal((await doc('profil', socialUser.uid)).tip, 'kurumsal');
+        await page.evaluate(async () => {
+          await (await import('/js/state.js')).state.db.auth.signOut();
+        });
+      }
+      await page.goto('http://127.0.0.1:4180/giris.html');
+      const linkingPopup = page.waitForEvent('popup');
+      await page.locator('[data-social=facebook]').click();
+      const linkWindow = await linkingPopup;
+      await linkWindow.waitForLoadState('domcontentloaded');
+      await linkWindow.locator('#add-account-button').click();
+      await linkWindow.locator('#email-input').fill('uye-a@example.invalid');
+      await linkWindow.locator('#sign-in').click();
+      await page.waitForFunction(
+        () =>
+          location.pathname === '/hesabim.html' ||
+          document.querySelector('#notice')?.textContent.includes('mevcut giriş yönteminizle'),
+      );
+      if (page.url().includes('/giris.html')) {
+        await page.locator('[name=email]').fill('uye-a@example.invalid');
+        await page.locator('[name=password]').fill('Test-parola-42!');
+        await page.locator('#auth-form button').click();
+        await page.waitForURL('**/hesabim.html');
+      }
+      const linked = await auth.getUserByEmail('uye-a@example.invalid');
+      assert.equal(linked.uid, 'uye-a');
+      assert.ok(linked.providerData.some((p) => p.providerId === 'facebook.com'));
+      assert.equal((await doc('profil', linked.uid)).ad, 'uye-a');
     } finally {
       await browser?.close();
       server.kill();
       await once(server, 'exit');
     }
+  });
+  await t.test('Profil tamamlama yetkileri ve mevcut hesap türünü değiştirmez', async () => {
+    const user = await auth.createUser({
+      uid: 'profil-tamamlama',
+      email: 'profil-tamamlama@example.invalid',
+      emailVerified: true,
+    });
+    await put('_yetkiler', user.uid, { kullanici_id: user.uid, admin: true, engelli: false });
+    await service.execute(
+      { name: 'profil_kaydet', data: { ad: 'Hesap Sahibi', tip: 'kurumsal' } },
+      user,
+    );
+    assert.equal((await doc('_yetkiler', user.uid)).admin, true);
+    await service.execute(
+      { name: 'profil_kaydet', data: { ad: 'Başka Ad', tip: 'bireysel' } },
+      user,
+    );
+    assert.equal((await doc('profil', user.uid)).tip, 'kurumsal');
+    await reject(
+      () =>
+        rpc('yonetici', 'admin_duzenle', {
+          p_tablo: 'ayarlar',
+          p_id: 'giris_saglayicilari',
+          p_veri: ['bilinmeyen'],
+        }),
+      /sağlayıcısı/,
+    );
+    await reject(
+      () =>
+        rpc('uye-a', 'admin_duzenle', {
+          p_tablo: 'ayarlar',
+          p_id: 'giris_saglayicilari',
+          p_veri: ['google'],
+        }),
+      /Yönetici/,
+    );
   });
   await t.test(
     'Kalıcı silme sahiplik ve onay ister; dosyaları ve 500 üzeri bağlı kaydı temizler',

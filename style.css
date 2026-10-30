@@ -2045,6 +2045,18 @@ dialog form > label textarea {
   margin-top: var(--s4);
   width: 100%;
 }
+.social-auth {
+  display: grid;
+  gap: var(--s3);
+}
+.social-auth .btn {
+  margin-top: var(--s3);
+  background: var(--surface);
+  color: var(--text);
+}
+.social-auth img {
+  flex: 0 0 20px;
+}
 .trap {
   position: absolute;
   left: -10000px;

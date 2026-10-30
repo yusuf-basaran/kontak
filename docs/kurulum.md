@@ -32,6 +32,8 @@ Firebase Hosting `/__/firebase/init.json` üzerinden public web yapılandırmas�
 
 `firebase.json` e-posta/parola girişini açar, anonim üyeliği kapatır; `firebase deploy --only auth` bu ayarı uygular. Firebase Console > Authentication > Settings > Authorized domains içine gerçek alan adı eklenir. E-posta doğrulama ve parola sıfırlama şablonları, gönderen alan adı ve parola politikası kontrol edilir. Doğrulanmamış üye ilan veya mesaj yazamaz.
 
+Google ve Facebook için [sosyal giriş kurulumunu](sosyal-giris.md) uygulayın. Sağlayıcı kimlik bilgileri Firebase Authentication'da tutulur. `node scripts/firebase/providers.mjs PROJE_KIMLIGI` komutu, etkin sağlayıcılarla sitedeki giriş düğmelerini eşitler.
+
 Yayın komutu öncesinde `INITIAL_ADMIN_EMAIL` ortam değişkeni verilirse betik bunu Git dışındaki proje ortam dosyasına ekler. Elle kurulumda ilk yönetici için `functions/.env.PROJE_KIMLIGI` dosyasında `INITIAL_ADMIN_EMAIL` değeri hesap sahibinin e-postası olarak tanımlanır. Dosya Git dışındadır. Functions yayımlandıktan sonra bu adresle kayıt olunur ve e-posta doğrulanır. İlk doğrulanmış istek, `_kurulum/yonetici` kaydını ve özel `_yetkiler` rolünü bir kez yazar. Ardından bu ortam değişkeni kaldırılıp Functions tekrar yayımlanabilir. İstemci e-postayla rol atayamaz; rol kullanıcı tarafından değiştirilemeyen sunucu ayarına bağlıdır.
 
 Alternatif olarak, yetkili ortamda Application Default Credentials ile:

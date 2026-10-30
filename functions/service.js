@@ -138,7 +138,8 @@ export function createService({ db, auth, bucket }) {
       };
       check(['bireysel', 'kurumsal'].includes(profile.tip), 'Hesap türü geçersiz');
       s.put('profil', c.uid, profile);
-      s.put('_yetkiler', c.uid, { kullanici_id: c.uid, admin: false, engelli: false });
+      if (!(await s.get('_yetkiler', c.uid)))
+        s.put('_yetkiler', c.uid, { kullanici_id: c.uid, admin: false, engelli: false });
       return null;
     }
     if (name === 'baslangic') {
@@ -229,13 +230,21 @@ export function createService({ db, auth, bucket }) {
     if (name === 'genel_ayarlar') {
       const out = {};
       await Promise.all(
-        ['kurlar', 'sosyal', 'iletisim_telefon', 'sms_zorunlu'].map(async (k) => {
-          out[k] = await setting(
-            s,
-            k,
-            k === 'sms_zorunlu' ? false : k === 'iletisim_telefon' ? '' : {},
-          );
-        }),
+        ['kurlar', 'sosyal', 'iletisim_telefon', 'sms_zorunlu', 'giris_saglayicilari'].map(
+          async (k) => {
+            out[k] = await setting(
+              s,
+              k,
+              k === 'sms_zorunlu'
+                ? false
+                : k === 'giris_saglayicilari'
+                  ? []
+                  : k === 'iletisim_telefon'
+                    ? ''
+                    : {},
+            );
+          },
+        ),
       );
       return out;
     }
