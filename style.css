@@ -2654,3 +2654,83 @@ textarea:focus {
   fill: var(--text);
   stroke: var(--surface);
 }
+
+.vehicle-history h3,
+.history-editor h3 {
+  margin-block: var(--s5) var(--s3);
+}
+.history-editor {
+  border-top: 1px solid var(--border);
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+}
+.history-docs {
+  list-style: none;
+  margin: var(--s3) 0;
+  padding: 0;
+}
+.history-docs li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.history-docs strong {
+  overflow-wrap: anywhere;
+}
+.history-docs p {
+  margin-block: var(--s2);
+}
+.history-warning {
+  border-left: 3px solid var(--warning);
+  background: var(--bg);
+  padding: var(--s3);
+}
+.history-table {
+  overflow-x: auto;
+}
+.history-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.history-table th,
+.history-table td {
+  padding: var(--s3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.history-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-block: var(--s3);
+}
+.history-chart polyline {
+  stroke: var(--orange);
+  stroke-width: 3;
+  fill: none;
+}
+.history-chart circle {
+  fill: var(--navy);
+}
+.history-chart .history-axis {
+  stroke: var(--border);
+  fill: none;
+}
+.history-codes {
+  margin-top: var(--s4);
+}
+.history-remove {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+@media (max-width: 600px) {
+  .history-docs li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -18,6 +18,7 @@ import {
 } from '../vehicle.js';
 import { bodyStates, cityList, partsDef } from '../data.js';
 import { qrSvg, resizePhoto } from '../media.js';
+import { bindHistory, historyBox, historyEditor } from '../history.js';
 
 export async function editorPage() {
   meta(t('seoEditorTitle'), t('seoEditorDescription'));
@@ -51,16 +52,19 @@ export async function editorPage() {
     photos = [...(c.fotograflar || [])],
     parts = {},
     gear = [],
-    report;
+    report,
+    historyData = {};
   if (id) {
-    const [p, e, r] = await Promise.all([
+    const [p, e, r, h] = await Promise.all([
       query(table('ilan_parca').eq('ilan_id', id)),
       query(table('ilan_donanim').eq('ilan_id', id)),
       query(table('ilan_ekspertiz').eq('ilan_id', id).maybeSingle()),
+      rpc('arac_gecmisi', { p_ilan: id }),
     ]);
     parts = Object.fromEntries(p.map((x) => [x.parca, x.durum]));
     gear = e.map((x) => x.donanim_id);
     report = r;
+    historyData = h || {};
   }
   const steps = ['category', 'vehicleInfo', 'bodyBox', 'expert', 'photos', 'pricing', 'preview'];
   let step = 0;
@@ -99,6 +103,7 @@ export async function editorPage() {
       `<small>PDF / JPG / PNG · 10 MB</small>` +
       `${label('inspectionFirm', inp('ekspertiz_firma', 'text', report?.firma))}` +
       `${label('inspectionDate', inp('ekspertiz_tarih', 'date', report?.tarih))}` +
+      `<div id="history-editor" class="history-editor"></div>` +
       `</fieldset><fieldset data-step="4" class="panel"><p>` +
       `${esc(t('maxPhotos'))}` +
       `</p>` +
@@ -126,6 +131,7 @@ export async function editorPage() {
       `</button></div></form>`,
   );
   const form = $('#editor'),
+    records = historyEditor($('#history-editor'), historyData),
     values = bindVehicles(form);
   const mark = state.lex.markalar.find((m) => String(m[0]) === String(c.marka_id || c.marka)),
     model = state.lex.modeller.find((m) => String(m[0]) === String(c.model_id || c.model));
@@ -219,13 +225,14 @@ export async function editorPage() {
       delete d.detay.telefon;
       if (d.baslik.length < 5) throw Error(t('invalid'));
       let uploaded;
-      const save = async (publishing) => {
+      const save = async (publishing, includeHistory = true) => {
         const result = await rpc('ilan_kaydet', {
           p_ilan: id || null,
           p_veri: d,
           p_parcalar: parts,
           p_donanim: $$('[name=donanim]:checked', form).map((e) => Number(e.value)),
           p_rapor: uploaded || null,
+          p_gecmis: includeHistory ? records.data() : null,
           p_telefon: phone || null,
           p_tip: form.tip.value,
           p_yayin: publishing,
@@ -236,15 +243,16 @@ export async function editorPage() {
         return id;
       };
       const file = form.rapor.files[0];
+      if ((file || records.pending()) && !id) await save(false, false);
       if (file) {
         if (!form.ekspertiz_firma.value || !form.ekspertiz_tarih.value) throw Error(t('invalid'));
-        if (!id) await save(false);
         uploaded = {
           dosya: await uploadFile('ekspertiz', file, id),
           firma: form.ekspertiz_firma.value,
           tarih: form.ekspertiz_tarih.value,
         };
       }
+      await records.upload(id);
       await save(publish);
       if (uploaded) {
         report = { ...uploaded, ilan_id: id };
@@ -284,8 +292,10 @@ export async function editorPage() {
           hasarli: Object.values(parts).filter((s) => s === 'hasarli').length,
         }) +
         bodyBox(parts, report) +
+        historyBox(records.data(), d.km) +
         equipmentBox($$('[name=donanim]:checked', form).map((e) => Number(e.value)));
       bindPanels();
+      bindHistory($('#editor-preview'), null);
     }
   }
   $('#step-next').onclick = () => {

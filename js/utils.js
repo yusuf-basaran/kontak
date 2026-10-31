@@ -69,3 +69,11 @@ export function filterUrl(p) {
   }
   return q.toString();
 }
+
+export function historyDrop(rows, km) {
+  const sorted = [...rows].sort((a, b) => a.tarih.localeCompare(b.tarih));
+  return (
+    sorted.some((r, i) => i > 0 && r.km < sorted[i - 1].km) ||
+    (sorted.length > 0 && km != null && km < sorted.at(-1).km)
+  );
+}

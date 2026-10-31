@@ -1,6 +1,7 @@
 import { check, fields, member, same } from './core.js';
 import { write, parts } from './write.js';
 import { quota } from './listings.js';
+import { historySave } from './history.js';
 
 export async function saveEditor(s, c, p, file) {
   member(c);
@@ -10,6 +11,7 @@ export async function saveEditor(s, c, p, file) {
     'p_parcalar',
     'p_donanim',
     'p_rapor',
+    'p_gecmis',
     'p_telefon',
     'p_tip',
     'p_yayin',
@@ -101,6 +103,7 @@ export async function saveEditor(s, c, p, file) {
       file,
     );
   }
+  if (p.p_gecmis != null) await historySave(s, c, id, p.p_gecmis, file);
   if (listing.diger_marka || listing.diger_model) {
     const make = listing.marka_id && (await s.get('markalar', listing.marka_id));
     const suggestion = {

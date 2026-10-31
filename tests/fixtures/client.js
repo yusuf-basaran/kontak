@@ -141,6 +141,8 @@ export async function createClient() {
           banners: T.bannerlar || [],
           counts: { kullanilmis: listings.length, sifir: 0, parca: 0, firma: 1 },
         },
+        arac_gecmisi: globalThis.fixture.history || { belgeler: [], kilometre: [] },
+        gecmis_dosya: '/assets/logo.webp',
         ilan_kaydet: { id: p.p_ilan || T.ilanlar[0].id, durum: p.p_yayin ? 'yayinda' : 'taslak' },
         istatistiklerim: (p.p_ilanlar || []).map((id) => ({
           id,

@@ -141,3 +141,11 @@ Açık sayfalarda sunucudan HTML, başlık/açıklama, canonical, TR/EN alternat
 ## 35. İşletime bağlı ayarlar
 
 Bildirim e-postası için gönderim hizmeti; SMS için telefon sağlayıcısı ayarı gerekir. Paket fiyat/kota/süreleri, banka bilgileri, kurlar, bannerlar ve iletişim bilgileri yönetici tarafından girilir. Değerleme için yeterli ilan, firma dizini için firma kaydı, vitrinler için uygun yayın gerekir. İşletmeci/yasal alanlar ve gerçek alan adı tamamlanmalıdır. Bu ayarlar yapılmadan ilgili özelliğin gerçek teslimatı veya içerik doluluğu tamamlanmış sayılmaz.
+
+## Araç Belgeleri ve Geçmişi
+
+İlan formunun ekspertiz adımında en çok 5 belge (PDF/JPG/PNG, belge başına 10 MB) ve 30 tarihli kilometre kaydı eklenebilir. Belgeler paylaşılmadan önce kişisel bilgiler kapatılmalı ve ilan ziyaretçileriyle paylaşım onayı verilmelidir. Kaydın kaynağı satıcı beyanı veya satıcının ilişkilendirdiği yüklenen belge olarak gösterilir; içerik otomatik okunmaz ve doğrulanmış kayıt sayılmaz.
+
+İlan detayında belgeler süreli erişim bağlantılarıyla açılır. Taslak, gizli, süresi bitmiş ve kaldırılmış ilanlarda yeni belge bağlantısı yalnız ilan sahibi ve yöneticiye verilir. Kilometre grafiği ve erişilebilir tablo kayıtları birlikte sunar; kayıtlar arasında düşüş ya da ilandaki kilometreyle fark varsa kontrol uyarısı görünür. Hasar kodları genel bilgi olarak açıklanır; kuruluşun belge açıklaması esas alınır.
+
+Harici geçmiş sorgusu, otomatik belge çevirisi veya ücretli veri servisi kullanılmaz. Yeni bölüm ilan kotası veya öne çıkarma hakkı tüketmez. İlan kalıcı silindiğinde geçmiş kayıtları ve ilanın belge klasöründeki dosyalar da temizlenir.

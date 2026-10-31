@@ -66,6 +66,7 @@ export async function purgeListing(db, bucket, key) {
     'ilan_parca',
     'ilan_donanim',
     'ilan_ekspertiz',
+    'ilan_gecmis',
     'fiyat_gecmisi',
     'favoriler',
     'randevular',

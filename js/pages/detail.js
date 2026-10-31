@@ -26,6 +26,7 @@ import { bindPanels, bodyBox, equipmentBox } from '../vehicle.js';
 import { mapContent } from './list.js';
 import { button, guard, inp, label, reportForm, safeAction, select } from '../forms.js';
 import { cityList } from '../data.js';
+import { bindHistory, historyBox } from '../history.js';
 
 export async function detailPage(id) {
   $('#main').innerHTML =
@@ -61,7 +62,7 @@ export async function detailPage(id) {
     `${c.marka || c.diger_marka || ''} ${c.model || c.diger_model || ''}, ${c.yil || ''}, ${c.km != null ? number(c.km) + ' km, ' : ''}${c.yakit ? t(c.yakit) + ', ' : ''}${c.vites ? t(c.vites) + ', ' : ''}${money(c.fiyat, c.para_birimi)}, ${c.sehir || ''}`,
     c.fotograflar?.[0],
   );
-  const [ps, es, report, seller, hist, market] = await Promise.all([
+  const [ps, es, report, seller, hist, market, records] = await Promise.all([
     query(table('ilan_parca').eq('ilan_id', c.id)),
     query(table('ilan_donanim').eq('ilan_id', c.id)),
     query(table('ilan_ekspertiz').eq('ilan_id', c.id).maybeSingle()),
@@ -75,6 +76,7 @@ export async function detailPage(id) {
         .eq('para_birimi', c.para_birimi)
         .maybeSingle(),
     ),
+    rpc('arac_gecmisi', { p_ilan: c.id }),
   ]);
   if (id !== state.routeId) return;
   const data = Object.fromEntries(ps.map((p) => [p.parca, p.durum])),
@@ -115,6 +117,7 @@ export async function detailPage(id) {
       `</section>` +
       `${box('vehicleInfo', `<dl class="spec-table">${attrs.map(([k, v]) => `<div><dt>${esc(t(k))}</dt><dd>${esc(v || t('unknown'))}</dd></div>`).join('')}</dl>`)}` +
       `${bodyBox(data, report)}` +
+      `${historyBox(records || {}, c.km)}` +
       `${equipmentBox(es.map((e) => e.donanim_id))}` +
       `${box(
         'declaration',
@@ -208,6 +211,7 @@ export async function detailPage(id) {
       `${esc(t('next'))}` +
       `">›</button></dialog>`);
   bindPanels();
+  bindHistory($('#main'), c.id);
   let index = 0;
   const showPhoto = (n) => {
     index = (n + c.fotograflar.length) % c.fotograflar.length;

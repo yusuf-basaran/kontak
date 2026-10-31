@@ -909,6 +909,115 @@ await test('Firebase sunucu işlemleri ve erişim kuralları', async (t) => {
       /Yönetici/,
     );
   });
+  await t.test('Araç geçmişi kaynak, dosya, tarih ve ilan erişimini sunucuda korur', async () => {
+    const key = id(),
+      documentId = id(),
+      owner = 'uye-a';
+    await put('ilanlar', key, {
+      ...base,
+      id: key,
+      kullanici_id: owner,
+      durum: 'taslak',
+      olusturma: future(0),
+    });
+    const path = `ekspertiz/${owner}/${key}/gecmis.pdf`;
+    assert.equal((await upload(owner, path, 'application/pdf', '%PDF-1.4\nbakim')).status, 200);
+    const history = {
+      belgeler: [
+        {
+          id: documentId,
+          ad: 'Bakım belgesi',
+          tur: 'bakim',
+          tarih: '2024-01-01',
+          dosya: path.slice('ekspertiz/'.length),
+        },
+      ],
+      kilometre: [
+        { tarih: '2024-01-01', km: 40000, belge_id: documentId },
+        { tarih: '2023-01-01', km: 20000, belge_id: null },
+      ],
+      yayin_onayi: true,
+    };
+    const payload = {
+      p_ilan: key,
+      p_veri: base,
+      p_parcalar: {},
+      p_donanim: [],
+      p_gecmis: history,
+      p_yayin: false,
+    };
+    await rpc(owner, 'ilan_kaydet', payload);
+    assert.equal((await doc('ilan_gecmis', key)).kilometre[0].km, 20000);
+    assert.equal(
+      (await rpc(owner, 'arac_gecmisi', { p_ilan: key })).belgeler[0].ad,
+      'Bakım belgesi',
+    );
+    await reject(rpc('uye-b', 'ilan_kaydet', payload), /bulunamadı/);
+    await reject(rpc('dogrulanmamis', 'ilan_kaydet', payload), /Doğrulanmış/);
+    await reject(rpc(null, 'arac_gecmisi', { p_ilan: key }), /bulunamadı/);
+    await reject(rpc('uye-b', 'gecmis_dosya', { p_ilan: key, p_belge: documentId }), /bulunamadı/);
+    assert.equal((await rest(firestore('ilan_gecmis', key), owner)).status, 403);
+    const directFile = `http://${process.env.FIREBASE_STORAGE_EMULATOR_HOST}/v0/b/${bucketName}/o/${encodeURIComponent(path)}?alt=media`;
+    assert.equal((await fetch(directFile)).status, 403);
+    const invalid = [
+      { ...history, yayin_onayi: false },
+      { ...history, dogrulandi: true },
+      { ...history, belgeler: Array(6).fill(history.belgeler[0]) },
+      { ...history, kilometre: Array(31).fill(history.kilometre[0]) },
+      ...['2024-02-30', '2999-01-01', '1899-12-31'].map((tarih) => ({
+        ...history,
+        kilometre: [{ tarih, km: 1, belge_id: null }],
+      })),
+      { ...history, kilometre: [{ tarih: '2024-01-01', km: 1.5, belge_id: null }] },
+      { ...history, kilometre: [{ tarih: '2024-01-01', km: 2000001, belge_id: null }] },
+      { ...history, kilometre: [history.kilometre[0], history.kilometre[0]] },
+      { ...history, kilometre: [{ ...history.kilometre[0], belge_id: id() }] },
+      { ...history, belgeler: [{ ...history.belgeler[0], dosya: `uye-b/${key}/gecmis.pdf` }] },
+      { ...history, belgeler: [{ ...history.belgeler[0], dosya: `${owner}/${id()}/gecmis.pdf` }] },
+    ];
+    for (const p_gecmis of invalid)
+      await reject(
+        rpc(owner, 'ilan_kaydet', {
+          ...payload,
+          p_veri: { ...base, baslik: 'Geçersiz kayıt başlığı' },
+          p_gecmis,
+        }),
+      );
+    assert.equal((await doc('ilanlar', key)).baslik, base.baslik);
+    assert.equal((await doc('ilan_gecmis', key)).belgeler.length, 1);
+    const badPath = `ekspertiz/${owner}/${key}/yanlis.html`;
+    await bucket.file(badPath).save('metin', { metadata: { contentType: 'text/html' } });
+    await reject(
+      rpc(owner, 'ilan_kaydet', {
+        ...payload,
+        p_gecmis: {
+          ...history,
+          belgeler: [{ ...history.belgeler[0], dosya: badPath.slice('ekspertiz/'.length) }],
+        },
+      }),
+      /Dosya türü/,
+    );
+    await db
+      .collection('ilanlar')
+      .doc(key)
+      .update({ durum: 'yayinda', bitis: future(30) });
+    const visible = await rpc(null, 'arac_gecmisi', { p_ilan: key });
+    assert.equal(visible.kilometre[1].belge_id, documentId);
+    const link = await rpc(null, 'gecmis_dosya', { p_ilan: key, p_belge: documentId });
+    const response = await fetch('http://127.0.0.1:5000' + link);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-type'), /pdf/);
+    await reject(rpc(null, 'gecmis_dosya', { p_ilan: key, p_belge: id() }), /Belge bulunamadı/);
+    await db.collection('ilanlar').doc(key).update({ gizli: true });
+    await reject(rpc(null, 'arac_gecmisi', { p_ilan: key }), /bulunamadı/);
+    await reject(rpc('uye-b', 'gecmis_dosya', { p_ilan: key, p_belge: documentId }), /bulunamadı/);
+    assert.equal((await rpc('yonetici', 'arac_gecmisi', { p_ilan: key })).belgeler.length, 1);
+    await rpc(owner, 'ilan_sil', { p_ilan: key, p_onay: true });
+    assert.equal(await doc('ilan_gecmis', key), undefined);
+    assert.equal((await bucket.file(path).exists())[0], false);
+    assert.equal((await bucket.file(badPath).exists())[0], false);
+    assert.equal((await fetch('http://127.0.0.1:5000' + link)).status, 403);
+  });
   await t.test(
     'Kalıcı silme sahiplik ve onay ister; dosyaları ve 500 üzeri bağlı kaydı temizler',
     async () => {

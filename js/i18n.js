@@ -2,6 +2,103 @@ import { state } from './state.js';
 import { bodyLabels, bodyStates, groupEn, groups, stateKeys } from './data.js';
 
 export const D = {
+  vehicleHistory: ['Araç Belgeleri ve Geçmişi', 'Vehicle Documents and History'],
+  historyIntro: [
+    'Belge ve kilometre kayıtlarını ücretsiz paylaşın. Harici araç geçmişi sorgusu yapılmaz.',
+    'Share documents and mileage records for free. No external vehicle history lookup is performed.',
+  ],
+  historyNotice: [
+    'Bilgiler satıcı tarafından eklenmiştir; KONTAK belgenin gerçekliğini veya araçla eşleşmesini doğrulamaz. Orijinal belgeyi ve aracı uzmanla kontrol edin.',
+    'Information is supplied by the seller. KONTAK does not verify document authenticity or that it belongs to this vehicle. Have the original document and vehicle checked by a professional.',
+  ],
+  historyPrivacy: [
+    'Belgelerdeki ad, telefon, adres, imza ve kimlik bilgilerini yüklemeden önce kapatın.',
+    'Redact names, phone numbers, addresses, signatures and identity details before uploading.',
+  ],
+  historyConsent: [
+    'Belgelerin ilan ziyaretçileri tarafından görüntülenmesine izin veriyorum.',
+    'I agree to make the documents viewable by visitors to this listing.',
+  ],
+  historyLimits: [
+    'En çok 5 belge, belge başına PDF / JPG / PNG · 10 MB; en çok 30 kilometre kaydı.',
+    'Up to 5 documents, PDF / JPG / PNG · 10 MB each; up to 30 mileage records.',
+  ],
+  historyDocs: ['Belgeler', 'Documents'],
+  historyName: ['Belge adı', 'Document name'],
+  historyType: ['Belge türü', 'Document type'],
+  historyDate: ['Kayıt tarihi', 'Record date'],
+  historyFile: ['Belge dosyası', 'Document file'],
+  historyAddDoc: ['Belge ekle', 'Add document'],
+  historyAddKm: ['Kilometre kaydı ekle', 'Add mileage record'],
+  historySource: ['Bilgi kaynağı', 'Information source'],
+  historySeller: ['Satıcı beyanı', 'Seller declaration'],
+  historyDocument: ['Yüklenen belge', 'Uploaded document'],
+  historyUnverified: ['Doğrulanmamış belge', 'Unverified document'],
+  historyRead: ['Belgeyi görüntüle', 'View document'],
+  historyMileage: ['Kilometre geçmişi', 'Mileage history'],
+  historyMileageNote: [
+    'Kilometre değerlerini satıcı girer. Belge bağlantısı, belgenin içeriğinin doğrulandığı anlamına gelmez.',
+    'Mileage values are entered by the seller. A document link does not mean its contents have been verified.',
+  ],
+  historyEmpty: [
+    'Satıcı henüz belge veya kilometre kaydı eklememiş.',
+    'The seller has not added documents or mileage records yet.',
+  ],
+  historyNoDocs: ['Belge eklenmemiş.', 'No documents have been added.'],
+  historyNoKm: ['Kilometre kaydı eklenmemiş.', 'No mileage records have been added.'],
+  historyDrop: [
+    'Kayıtlarda kilometre düşüşü veya ilandaki kilometreyle fark var. Bu durum tek başına usulsüzlük kanıtı değildir; belgeleri ve sayacı kontrol ettirin.',
+    'Mileage decreases between records or conflicts with the listing mileage. This alone does not prove tampering; have the records and odometer checked.',
+  ],
+  historyChart: [
+    'Tarihli kilometre kayıtları; değerler aşağıdaki tabloda yer alır.',
+    'Dated mileage records; values are available in the table below.',
+  ],
+  historyPending: ['Kaydedilmeyi bekliyor', 'Pending save'],
+  historyInvalid: [
+    'Tarih, kilometre, belge sınırı ve paylaşım onayını kontrol edin. Aynı tarih için tek kilometre kaydı girin.',
+    'Check the date, mileage, document limits and sharing consent. Enter only one mileage record per date.',
+  ],
+  historyCodes: ['Açık artırma hasar kodları', 'Auction damage codes'],
+  historyCodesNote: [
+    'Kodlar açık artırma kuruluşuna göre değişebilir. Açıklamalar genel bilgi içindir; seçiminiz aracın hasar kaydını değiştirmez.',
+    'Codes may vary by auction house. These explanations are general guidance; selecting a code does not change the vehicle damage record.',
+  ],
+  historyCode: ['Hasar kodu', 'Damage code'],
+  historyCodeA: [
+    'A: Çizik. 1, 2 ve 3 genellikle küçükten büyüğe derecelendirmeyi belirtir.',
+    'A: Scratch. 1, 2 and 3 usually indicate increasing size or severity.',
+  ],
+  historyCodeU: [
+    'U: Göçük. 1, 2 ve 3 genellikle küçükten büyüğe derecelendirmeyi belirtir.',
+    'U: Dent. 1, 2 and 3 usually indicate increasing size or severity.',
+  ],
+  historyCodeW: [
+    'W: Onarım veya boya yüzeyinde dalgalanma izi. Dereceyi belgenin açıklamasıyla karşılaştırın.',
+    'W: Signs of repair or paint surface waviness. Check the grade against the document legend.',
+  ],
+  historyCodeS: [
+    'S: Pas. Kapsamını ve şiddetini uzmanla kontrol edin.',
+    'S: Rust. Have its extent and severity checked by a professional.',
+  ],
+  historyCodeC: [
+    'C: Korozyon. Yüzeysel pasla aynı değerlendirilmemelidir.',
+    'C: Corrosion. It should not be treated as equivalent to surface rust.',
+  ],
+  historyCodeX: [
+    'X: Genellikle değişim gerektiren parça. Belgenin açıklamasını esas alın.',
+    'X: Usually a panel requiring replacement. Refer to the document legend.',
+  ],
+  historyCodeXX: [
+    'XX: Genellikle değiştirilmiş parça. Belgenin açıklamasını esas alın.',
+    'XX: Usually a replaced panel. Refer to the document legend.',
+  ],
+  history_ekspertiz: ['Ekspertiz raporu', 'Inspection report'],
+  history_acik_artirma: ['Açık artırma belgesi', 'Auction document'],
+  history_bakim: ['Bakım kaydı', 'Service record'],
+  history_muayene: ['Muayene belgesi', 'Test certificate'],
+  history_diger: ['Diğer belge', 'Other document'],
+
   seoHomeTitle: ['KONTAK | KKTC Satılık Araç İlanları', 'KONTAK | Cars for Sale in North Cyprus'],
   seoHomeDescription: [
     "KKTC'de sıfır ve ikinci el araçları marka, model, fiyat ve şehre göre filtreleyin. Girne, Lefkoşa, Gazimağusa, İskele, Güzelyurt ve Lefke ilanları KONTAK'ta.",

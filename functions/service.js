@@ -18,6 +18,7 @@ import {
   notify,
 } from './core.js';
 import { saveEditor } from './editor.js';
+import { historyRead } from './history.js';
 import { deleteListing } from './deletion.js';
 import { read, search, statistics } from './data.js';
 import { write, primary } from './write.js';
@@ -27,6 +28,7 @@ import { conversation, seller } from './messages.js';
 import { adminData, adminWrite, approve, merge } from './admin.js';
 
 const readonly = [
+  'arac_gecmisi',
   'baslangic',
   'ana_sayfa',
   'arac_sozlugu',
@@ -119,6 +121,10 @@ export function createService({ db, auth, bucket }) {
       for (const role of (await s.all('_yetkiler')).filter((r) => r.admin && !r.engelli))
         await notify(s, role.kullanici_id, 'iletisim', { iletisim_id: row.id }, row.id, false);
       return { id: row.id };
+    }
+    if (name === 'arac_gecmisi') {
+      fields(p, ['p_ilan']);
+      return historyRead(s, c, p.p_ilan);
     }
     if (name === 'ilan_kaydet') return saveEditor(s, c, p, file);
     if (name === 'profil_kaydet') {
@@ -402,19 +408,32 @@ export function createService({ db, auth, bucket }) {
       }
       return out;
     }
-    if (name === 'dosya_url') {
-      const name = text(p.file, 1, 600),
+    if (name === 'dosya_url' || name === 'gecmis_dosya') {
+      const historyFile = name === 'gecmis_dosya';
+      let fileName, bucketName;
+      if (historyFile) {
+        fields(p, ['p_ilan', 'p_belge']);
+        const history = await historyRead(s, c, p.p_ilan);
+        const document = history.belgeler.find((r) => r.id === p.p_belge);
+        check(document, 'Belge bulunamadı', 404);
+        fileName = document.dosya;
+        bucketName = 'ekspertiz';
+      } else {
+        fileName = text(p.file, 1, 600);
         bucketName = p.bucket;
+      }
       let uid = c.uid,
         parent;
       if (bucketName === 'dekontlar') {
         member(c);
-        const r = (await s.all('paket_talepleri', [['dekont_dosya', '==', name]]))[0];
+        const r = (await s.all('paket_talepleri', [['dekont_dosya', '==', fileName]]))[0];
         check(r && (c.admin || r.kullanici_id === c.uid), 'Dekont erişimi yok', 403);
         uid = r.kullanici_id;
         parent = r.id;
       } else if (bucketName === 'ekspertiz') {
-        const r = (await s.all('ilan_ekspertiz', [['dosya', '==', name]]))[0],
+        const r = historyFile
+            ? { ilan_id: p.p_ilan }
+            : (await s.all('ilan_ekspertiz', [['dosya', '==', fileName]]))[0],
           listing = r && (await s.get('ilanlar', r.ilan_id));
         check(
           listing && (active(listing) || c.admin || listing.kullanici_id === c.uid),
@@ -424,7 +443,7 @@ export function createService({ db, auth, bucket }) {
         uid = listing.kullanici_id;
         parent = listing.id;
       } else check(false, 'Özel dosya alanı geçersiz');
-      const target = await file(bucketName, name, uid, parent);
+      const target = await file(bucketName, fileName, uid, parent);
       const token = hash(id() + id());
       s.put('_dosyalar', hash(token), { path: target.name, expires: Date.now() + 120000 });
       return '/api/dosya?token=' + token;
